@@ -21,6 +21,8 @@ Expected folder structure:
   |-Sample2      
       |-Sample2_R1.fastq.gz       
       |-Sample2_R2.fastq.gz
+  |-...
+  |-...
       
 </pre>
 
