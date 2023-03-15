@@ -12,7 +12,7 @@ do
     R1=$(ls *R1*)
     R2=$(ls *R2*)
     
-    (bowtie2 -p 1 -x /home/docker/CommonFiles/Refs/MTBref_bt2 -1 ${R1} -2 ${R2} -S ${dir%/}.sam) 2> ${dir%/}_Bowtie2summary.txt
+    (bowtie2 -p 4 -x /home/docker/CommonFiles/Refs/MTBref_bt2 -1 ${R1} -2 ${R2} -S ${dir%/}.sam) 2> ${dir%/}_Bowtie2summary.txt
     samtools view -b -o ${dir%/}.bam  ${dir%/}.sam
     samtools sort ${dir%/}.bam -o ${dir%/}.sorted.bam
     samtools index ${dir%/}.sorted.bam
@@ -26,6 +26,7 @@ do
     rm *.bam
     rm *.sam
     rm *.bai
+    rm *.txt
      
     cd ..
 
@@ -34,8 +35,9 @@ done
 cp -R /home/docker/results /Data/TBTypResults
 cd /Data/TBTypResults
 
-Rscript /home/docker/CommonFiles/LineageAssignment.R
+Rscript /home/docker/CommonFiles/Scripts/LineageAssignment.R
 
+rm Rplots.pdf
 mkdir bam
 mv *.bam bam
 mv *.bai bam

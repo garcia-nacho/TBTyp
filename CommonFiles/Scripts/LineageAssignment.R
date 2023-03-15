@@ -84,19 +84,6 @@ if(!exists("df2out")){
 }
 
 
-ggplot(df2out)+
-  geom_point(aes(Position, 1-Noise, col=assignment),size=3,alpha=0.3)+
-  geom_text_repel(aes(Position, 1-Noise, label=paste("Depth:",Reads)))+
-  scale_color_manual(values = rainbow(length(unique(df2out$assignment))))+
-  theme_minimal()+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
-  ylim(0,1.1)+
-  xlab("Informative Positions in Rreference")+
-  ylab("Certainty (1-Noise)")+
-  facet_wrap(~Sample)
-
-ggsave("FacetedResults.pdf", height =  8.27, width =  11.69)
-
 
 samples<-as.data.frame(unique(df2out$Sample))
 colnames(samples)<-"Sample"
