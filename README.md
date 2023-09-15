@@ -1,6 +1,6 @@
 # TBTyp   
 *Mycobacterium tuberculosis* classification pipeline.   
-[![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)   [![Docker](https://badgen.net/badge/icon/docker?icon=docker&label)](https://https://docker.com/)
+[![Docker](https://badgen.net/badge/icon/docker?icon=docker&label)](https://https://docker.com/)
    
 This pipeline can be used to classify M. tuberculosis samples from Illumina paired-end fastq files using the [TBProfiler](https://github.com/jodyphelan/TBProfiler) scheme.   
 If there is a mixture of lineages based on the different SNPs of the scheme the ratio of reads supporting each of the lineages is displayed.    
