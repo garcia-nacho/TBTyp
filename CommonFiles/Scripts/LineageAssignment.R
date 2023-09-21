@@ -92,6 +92,7 @@ samples$Noise<- as.numeric(gsub(" .*","", gsub(".*\\| Noise: ","",gsub("%","", s
 samples$Lineage<-NA
 samples$LineageProbability<-NA
 
+
 for (i in 1:nrow(samples)) {
   lin<-df2out[which(df2out$Sample==samples$Sample[i]),]
   lin.unique<-as.data.frame(unique(lin$lineage))
@@ -107,12 +108,14 @@ for (i in 1:nrow(samples)) {
   for (k in 1:nrow(lin.unique)) {
     Score.to.add<- lin.unique$Score[k]
     index.to.add<- grep(lin.unique$Lineage[k],lin.unique$Lineage)
-    index.to.add<-index.to.add[-which(index.to.add==k)]
+    lin.to.add<-lin.unique$Lineage[grep(lin.unique$Lineage[k],lin.unique$Lineage)]
+    #index.to.add<-index.to.add[-which(lin.to.add==lin.unique$Lineage[k])]
     if(length(index.to.add)>0) lin.unique$Support[index.to.add]<- lin.unique$Support[index.to.add] + Score.to.add
     if(length(grep(lin.unique$Lineage[k],lin.unique$Lineage))==1) lin.unique$Final[k]<-"YES"
   }
   
-  lin.unique$TotalScore<-(lin.unique$Support+lin.unique$Score)/sum(lin.unique$Score)
+  lin.unique<-lin.unique[which(lin.unique$Final=="YES"),]
+  lin.unique$TotalScore<-lin.unique$Support/sum(lin.unique$Support)
   
   samples$Lineage[i]<-paste(lin.unique$Lineage[which(lin.unique$Final=="YES")], collapse = "/")
 
