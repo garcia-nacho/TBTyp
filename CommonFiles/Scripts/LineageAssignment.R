@@ -81,6 +81,7 @@ length(unique(c(df_typ$assignment[which(df_typ$ToAnalyzeG=="YES")], df_typ$assig
 
 ggplot(df_typ[which(df_typ$ToAnalyzeG=="YES"),])+
   #geom_line(aes(Position, 1-Noise),alpha=0.4)+
+  geom_hline(yintercept = 0.9, col="red", size=0.2,alpha=0.5)+
   geom_point(aes(Position, 1-Noise, col=assignment),size=3,alpha=0.3)+
   geom_text_repel(aes(Position, 1-Noise, label=paste("Depth:",Reads)), max.overlaps = 50)+
   geom_point(aes(Position, Noise, col=assignment2),size=3,alpha=0.3)+
@@ -99,17 +100,20 @@ ggsave(paste(gsub("_noise.tsv","",files[i]),"_FULL_SNPHits.pdf",sep = ""),width 
 
 ggplot(df_typ[-which(df_typ$assignment %in% c("Reference","Unknown")),])+
   #geom_line(aes(Position, 1-Noise),alpha=0.4)+
+  geom_hline(yintercept = 0.9, col="red", size=0.2,alpha=0.5)+
   geom_point(aes(Position, 1-Noise, col=assignment),size=3,alpha=0.3)+
   geom_text_repel(aes(Position, 1-Noise, label=paste("Depth:",Reads)), max.overlaps = 50)+
   scale_color_manual(values = c(rainbow(length(unique(df_typ$assignment))-1),"grey"))+
   theme_minimal()+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   ylim(0,1.1)+
+
   xlab("Informative Positions in Rreference")+
   ylab("Certainty (1-Noise)")+
   ggtitle(paste("Sample:",gsub(".*/","",gsub("_noise.tsv","",files[i])), " | Noise: ",round(mean(df_typ$Noise,na.rm = TRUE)*100,1),"%", " | Coverage:", 
                 100-round((length(which(df$Reads==0))*100)/nrow(df),1),
                 sep = ""))
+  
 ggsave(paste(gsub("_noise.tsv","",files[i]),"_SNPHits.pdf",sep = ""),width = 10, height = 5 )
 
 
