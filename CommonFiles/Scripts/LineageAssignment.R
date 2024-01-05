@@ -5,7 +5,7 @@ library(ggrepel)
 library(writexl)
 
 # ref<-read.fasta("/media/nacho/Data/MTB_Tests/MTuberculosisH37Rv.fasta")
-# files<-list.files("/media/nacho/Data/MTB_Tests/noise/", full.names = TRUE, pattern = ".tsv")
+# files<-list.files("/media/nacho/Data/temp/TB894/TBTypResults/noise/", full.names = TRUE, pattern = ".tsv")
 # typing2<-read.csv("/media/nacho/Data/MTB_Tests/Coll_scheme_classification.csv")
 # typing<-read.csv("/media/nacho/Data/MTB_Tests/tbdb.barcode.bed",sep = "\t", header = FALSE)
 
@@ -49,12 +49,53 @@ df_typ$Allele.change<-gsub("./","",df_typ$Allele.change)
 df_typ$assignment<-NA
 df_typ$assignment[which(df_typ$Base1==df_typ$Allele.change)]<-df_typ$lineage[which(df_typ$Base1==df_typ$Allele.change)]
 df_typ$assignment[which(df_typ$Base1==df_typ$Reference)]<-"Reference"
-
 df_typ$assignment[which(is.na(df_typ$assignment))]<-"Unknown"
+
 df_typ$assignment2<-NA
 df_typ$assignment2[which(df_typ$Base2==df_typ$Allele.change)]<-df_typ$lineage[which(df_typ$Base2==df_typ$Allele.change)]
+df_typ$assignment2[which(df_typ$Base2==df_typ$Reference)]<-"Reference"
+df_typ$assignment2[which(is.na(df_typ$assignment2))]<-"Unknown"
+
 df_typ$Position<-as.character(df_typ$Position)
 df_typ$Position<-factor(df_typ$Position, levels=df_typ$Position[order(as.numeric(df_typ$Position))])
+df_typ$ToAnalyze<-"NO"
+df_typ$ToAnalyze[-which(df_typ$assignment %in% c("Reference", "Unknown") )] <-"YES"
+
+df_typ$ToAnalyze2<-"NO"
+if(length(which(df_typ$Noise>0.1))>0){
+  df_typ$ToAnalyze2[-which(df_typ$assignment2 %in% c("Reference", "Unknown") )] <-"YES"  
+  df_typ$ToAnalyze2[which(df_typ$ToAnalyze2 == "YES" & df_typ$Noise <0.10) ] <-"NO" 
+  if(length(which(df_typ$ToAnalyze2=="YES" & df_typ$Reads <100 ))>0){
+    df_typ$ToAnalyze2[which(df_typ$ToAnalyze2=="YES" & df_typ$Reads <100 ) ] <-"NO" 
+  } 
+} 
+
+
+
+
+df_typ$ToAnalyzeG<-"NO"
+df_typ$ToAnalyzeG[which(df_typ$ToAnalyze =="YES" | df_typ$ToAnalyze2=="YES")]<-"YES"
+
+
+length(unique(c(df_typ$assignment[which(df_typ$ToAnalyzeG=="YES")], df_typ$assignment2[which(df_typ$ToAnalyzeG=="YES")])))-1 
+
+ggplot(df_typ[which(df_typ$ToAnalyzeG=="YES"),])+
+  #geom_line(aes(Position, 1-Noise),alpha=0.4)+
+  geom_point(aes(Position, 1-Noise, col=assignment),size=3,alpha=0.3)+
+  geom_text_repel(aes(Position, 1-Noise, label=paste("Depth:",Reads)), max.overlaps = 50)+
+  geom_point(aes(Position, Noise, col=assignment2),size=3,alpha=0.3)+
+  scale_color_manual(values = c(rainbow(length(unique(c(df_typ$assignment[which(df_typ$ToAnalyzeG=="YES")], df_typ$assignment2[which(df_typ$ToAnalyzeG=="YES")])))-1),"grey"))+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ylim(0,1.1)+
+  xlab("Informative Positions in Rreference")+
+  ylab("Certainty (1-Noise)")+
+  ggtitle(paste("Sample:",gsub(".*/","",gsub("_noise.tsv","",files[i])), " | Noise: ",round(mean(df_typ$Noise,na.rm = TRUE)*100,1),"%", " | Coverage:", 
+                100-round((length(which(df$Reads==0))*100)/nrow(df),1),
+                sep = ""))
+
+ggsave(paste(gsub("_noise.tsv","",files[i]),"_FULL_SNPHits.pdf",sep = ""),width = 10, height = 5 )
+
 
 ggplot(df_typ[-which(df_typ$assignment %in% c("Reference","Unknown")),])+
   #geom_line(aes(Position, 1-Noise),alpha=0.4)+
@@ -71,7 +112,10 @@ ggplot(df_typ[-which(df_typ$assignment %in% c("Reference","Unknown")),])+
                 sep = ""))
 ggsave(paste(gsub("_noise.tsv","",files[i]),"_SNPHits.pdf",sep = ""),width = 10, height = 5 )
 
-df2<-df_typ[-which(df_typ$assignment %in% c("Reference","Unknown")),]
+
+
+#df2<-df_typ[-which(df_typ$assignment %in% c("Reference","Unknown")),]
+df2<-df_typ[which(df_typ$ToAnalyzeG =="YES"),]
 df2$Sample<-paste("Sample:",gsub(".*/","",gsub("_noise.tsv","",files[i])), " | Noise: ",round(mean(df_typ$Noise,na.rm = TRUE)*100,1),"%", " | Coverage:", 
                   100-round((length(which(df$Reads==0))*100)/nrow(df),1),
                   sep = "")
@@ -91,7 +135,6 @@ samples$Coverage<-gsub(".*\\| Coverage:", "", samples$Sample)
 samples$Noise<- as.numeric(gsub(" .*","", gsub(".*\\| Noise: ","",gsub("%","", samples$Sample))))/1000
 samples$Lineage<-NA
 samples$LineageProbability<-NA
-
 
 for (i in 1:nrow(samples)) {
   lin<-df2out[which(df2out$Sample==samples$Sample[i]),]
@@ -115,14 +158,20 @@ for (i in 1:nrow(samples)) {
   }
   
   lin.unique<-lin.unique[which(lin.unique$Final=="YES"),]
-  lin.unique$TotalScore<-lin.unique$Support/sum(lin.unique$Support)
+  lin.unique$TotalScore<-lin.unique$Support/sum(lin.unique$Support)  
   
+  if(length(which(lin.unique$TotalScore<0.05))>0) lin.unique<-lin.unique[-which(lin.unique$TotalScore<0.05),]
+  
+  lin.unique$TotalScore<-lin.unique$Support/sum(lin.unique$Support)  
   samples$Lineage[i]<-paste(lin.unique$Lineage[which(lin.unique$Final=="YES")], collapse = "/")
+  
 
   samples$LineageProbability[i] <-   paste(lin.unique$Lineage[which(lin.unique$Final=="YES")], " : ",
                                       round(lin.unique$TotalScore[which(lin.unique$Final=="YES")]*100,2),"%",sep="",collapse = " / ")
+  samples$SamplePurity[i]<-mean((1-lin$Noise),na.rm=TRUE)
   
 }
+
 
 samples$Sample<-gsub(" .*","",gsub("Sample:","",samples$Sample))
 write_xlsx(samples, "LineageAssignmentScore.xlsx" )
